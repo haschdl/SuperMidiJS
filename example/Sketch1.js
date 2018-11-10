@@ -76,7 +76,6 @@ function draw() {
          stroke(0);
          fill(255, 0, 0);
          rect(s * 2 * i, 50, s, s);
-
       } else {
          noFill();
          rect(s * 2 * i, 50, s, s);

@@ -1,11 +1,30 @@
-input[type=text], select {
-   width: 100%;
+input[type=text],
+select {
+   width: 50%;
    padding: 12px 20px;
    margin: 8px 0;
-   display: inline-block;
    border: 1px solid #ccc;
    border-radius: 4px;
    box-sizing: border-box;
+
+}
+
+.inputSmall {
+   width: 20% !important;
+   text-align: center;
+}
+
+label {
+   width: 15%;
+   margin: 20px 0;
+   padding: 10px 5px;
+   text-align: right;
+   display:inline-block
+
+}
+
+.labelSmall {
+   width: 8%;
 }
 
 input[type=submit] {

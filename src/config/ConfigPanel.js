@@ -177,11 +177,14 @@ export class ConfigPanel {
 
       for (let i = 0; i < 16; i++) {
          var fInput = createEl('input', "config_pad_" + i, 'PAD ' + i, '', "text");
+         fInput.className = "inputSmall";
          let fLabel = createEl('Label', '', 'PAD ' + i, 'PAD ' + i, '');
          fLabel.setAttribute("for", "config_pad_" + i);
+         fLabel.className = "labelSmall";
          fDiv.appendChild(fLabel);
          fDiv.appendChild(fInput);
-         createAndAppend("BR", '', '', '', '', fDiv);
+         if (i % 2 == 1)
+            createAndAppend("BR", '', '', '', '', fDiv);
       }
 
       let fButtonSub = d.createElement("BUTTON");
