@@ -1,7 +1,7 @@
 export class Configuration {
-   constructor({manufacturer,portName, pads=[], sliders=[]}) {
+   constructor({manufacturer,name, pads={}, sliders={}}) {
       this.manufacturer = manufacturer;
-      this.portName = portName;
+      this.name = name;
       this.pads = pads;
       this.sliders= sliders;
 

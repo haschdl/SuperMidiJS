@@ -1,19 +1,48 @@
 import {
+   Configuration
+} from '../Configuration.js';
+
+import {
    Configurator
 } from '../Configurator.js';
+import {
+   ConfigPanelStyles
+} from './ConfigPanelStyles.js';
+
+import {
+   removeElement,
+   createAndAppend,
+   createEl,
+   setValue,
+   formToJSON,
+   highlightDuplicates
+} from './DomUtils.js';
+
+
+
 //http://jsfiddle.net/ka0yn8Lv/34/
 
 
-function addStyleString(str) {
+function loadConfigPanelStyles() {
    var node = document.createElement('style');
-   node.innerHTML = str;
+   node.innerHTML = ConfigPanelStyles;
    document.body.appendChild(node);
+
 }
 
+
+
 export class ConfigPanel {
+
    constructor(parent) {
       this.parent = parent;
       this.lastMessageTimeStamp = 0;
+      this.updateConfigurationPromise = null;
+      this.configuration = null;
+
+
+
+      //loadConfigPanelStyles();
 
       /***
        * Subscribing to MIDI messages from the SuperMidi
@@ -28,18 +57,28 @@ export class ConfigPanel {
 
          let curr = document.activeElement;
          let elId = "" + curr.id;
-         if (elId.startsWith('config_') && curr.type == "text") {
-            document.activeElement.value = text;
-         }
 
+         //removing current duplicates
+         let val = document.activeElement.value;
+
+         Array.from(document.querySelectorAll(".inputDuplicate"))
+            .filter(el => el.value == val)
+            .forEach(el => el.classList.remove('inputDuplicate'));
 
          let nextField = document.activeElement.nextSibling;
-         while (nextField) {
-            if (nextField.type && nextField.type == "text") {
-               nextField.focus();
-               break;
+         if (elId.startsWith('config_') && curr.type == "text") {
+            document.activeElement.value = text;
+            document.activeElement.blur();
+         }
+
+         if (!highlightDuplicates(text)) {
+            while (nextField) {
+               if (nextField.type && nextField.type == "text") {
+                  nextField.focus();
+                  break;
+               }
+               nextField = nextField.nextSibling;
             }
-            nextField = nextField.nextSibling;
          }
       });
 
@@ -61,96 +100,85 @@ export class ConfigPanel {
       });
    }
 
-   static removeElement(elementId) {
-      let elet = document.getElementById(elementId);
-      elet.parentNode.removeChild(elet);
+   updateConfiguration(config) {
+      this.updateConfigurationPromise = new Promise((resolve, reject) => {
+         this.buildForm();
+         if (config)
+            this.loadExisting(config);
+      });
+      return this.updateConfigurationPromise;
    }
 
-   static superMidiSaveConfig() {
-      ConfigPanel.removeElement("formSuperMidiConfig");
+   jsonToForm(json) {
+      Object.keys(json).forEach(key => {
+         if (json[key].constructor == Object) {
+            Object.keys(json[key]).forEach(key1 => setValue(key1, json[key][key1]));
+         } else
+            setValue(key, json[key]);
+
+      });
+
+      Object.keys(json).forEach(key => {
+         if (json[key].constructor == Object) {
+            Object.keys(json[key]).forEach(key1 => highlightDuplicates(JSON.stringify(json[key][key1])));
+         } else
+            highlightDuplicates(json[key]);
+      });
+
+
+   };
+
+   loadExisting(configuration) {
+      this.jsonToForm(configuration);
    }
 
    closeForm() {
-      //this.parent = null;
-      ConfigPanel.removeElement("formSuperMidiConfig");
+      removeElement("formDivOuterSuperMidi");
    }
 
+   /**
+    * A handler function to prevent default submission and run our custom script.
+    * @param  {Event} event  the submit event triggered by the user
+    * @return {void}
+    */
+   handleFormSubmit(event) {
+      console.log("Handling form submission");
+      const form = document.getElementById("formSuperMidiConfig");
 
+      //event.preventDefault();
+      const data = formToJSON(form.elements);
 
+      console.dir(data);
+      this.configuration = new Configuration(data);
+
+      Configurator.saveToStorage(data);
+
+      removeElement("formDivOuterSuperMidi");
+
+      Promise.resolve(this.updateConfigurationPromise); //.resolve(this.configuration);
+
+   }
    buildForm() {
+      let dummy = () => false;
+
       let lastMessageTimeStamp = Date.now();
 
-
-      /**
-       * Retrieves input data from a form and returns it as a JSON object.
-       * @param  {HTMLFormControlsCollection} elements  the form elements
-       * @return {Object}                               form data as an object literal
-       */
-      let formToJSON = elements => [].reduce.call(elements, (data, element) => {
-         if (!element.name)
-            return data;
-         if (element.name.startsWith("PAD")) {
-            if (!data["PADS"])
-               data["PADS"] = [];
-
-            let val = element.value || "[]";
-
-            data["PADS"].push(JSON.parse(val));
-         } else
-            data[element.name] = element.value;
-
-         return data;
-
-      }, {});
-
-      /**
-       * A handler function to prevent default submission and run our custom script.
-       * @param  {Event} event  the submit event triggered by the user
-       * @return {void}
-       */
-      let handleFormSubmit = (event) => {
-         console.log("Handling form submission");
-         const form = document.getElementById("formSuperMidiConfig");
-
-         // Stop the form from submitting since we’re handling that with AJAX.
-         event.preventDefault();
-
-         const data = formToJSON(form.elements);
-
-         // Use `JSON.stringify()` to make the output valid, human-readable JSON.
-
-         console.dir(data);
-
-         Configurator.saveToStorage(data);
-
-      }
-
-
-
-      let createEl = (tag, id, name, innerHtml, type) => {
-         let el = document.createElement(tag);
-         if (innerHtml)
-            el.innerHTML = innerHtml;
-         if (type)
-            el.type = type;
-         if (name)
-            el.name = name;
-         el.id = id;
-         return el;
-      }
-      let createAndAppend = (tag, id, name, innerHtml, type, appendTo) => {
-         let el = createEl(tag, id, name, innerHtml, type)
-         appendTo.appendChild(el);
-      }
 
       let d = document;
       console.log("Fallback to manual configuration from form.");
 
       let fForm = createEl('form', 'formSuperMidiConfig');
-      let fDiv = createEl('div', "formDivSuperMidi", );
+      let fDivOuter = createEl('div', "formDivOuterSuperMidi", );
+      fDivOuter.className = "formOuter";
 
-      createAndAppend('h1', 'deviceInfo', '', 'Device information', "", fDiv);
-      createAndAppend('h3', 'deviceInfoInstruction', '', 'Reconnecting a MIDI device will populate manufacturer and port name.', "", fDiv);
+      let fDivMiddle = createEl('div', "formDivMiddleSuperMidi", );
+      fDivMiddle.className = "formMiddle";
+
+      let fDiv = createEl('div', "formDivInnerSuperMidi", );
+      fDiv.className = "formInner";
+
+      createAndAppend('h1', 'deviceInfo', '', 'Device information', "", fForm);
+      createAndAppend('p', 'deviceInfoInstruction', '', 'Reconnecting a MIDI device will populate manufacturer and port name.', "", fForm);
 
 
       let fInput2 = createEl('input', 'name', 'name', '', 'text');
@@ -158,48 +186,50 @@ export class ConfigPanel {
       fLabel2.setAttribute("for", "name");
 
 
-      fDiv.appendChild(fLabel2);
-      fDiv.appendChild(fInput2);
-      createAndAppend("BR", '', '', '', '', fDiv);
+      fForm.appendChild(fLabel2);
+      fForm.appendChild(fInput2);
+      createAndAppend("BR", '', '', '', '', fForm);
 
       var fInput = createEl('input', "manufacturer", 'manufacturer', '', 'text');
       var fLabel = createEl('Label', 'lblManufacturer', '', 'Manufacturer');
       fLabel.setAttribute("for", "manufacturer");
 
-      fDiv.appendChild(fLabel);
-      fDiv.appendChild(fInput);
-      createAndAppend("BR", '', '', '', '', fDiv);
+      fForm.appendChild(fLabel);
+      fForm.appendChild(fInput);
+      createAndAppend("BR", '', '', '', '', fForm);
 
 
 
-      createAndAppend('h1', 'pads', '', 'Pads mapping', "", fDiv);
-      createAndAppend('h3', 'devicePadInstruction', '', 'Leaving focus in one field and sending a MIDI message will associate the MIDI pad/button with SuperMidi button.', "", fDiv);
+      createAndAppend('h1', 'pads', '', 'Pads mapping', "", fForm);
+      createAndAppend('p', 'devicePadInstruction', '', 'Leaving focus in one field and sending a MIDI message will associate the MIDI pad/button with SuperMidi button.', "", fForm);
 
       for (let i = 0; i < 16; i++) {
-         var fInput = createEl('input', "config_pad_" + i, 'PAD ' + i, '', "text");
+         var fInput = createEl('input', "config_pad_" + i, 'pad_' + i, '', "text");
          fInput.className = "inputSmall";
          let fLabel = createEl('Label', '', 'PAD ' + i, 'PAD ' + i, '');
          fLabel.setAttribute("for", "config_pad_" + i);
          fLabel.className = "labelSmall";
-         fDiv.appendChild(fLabel);
-         fDiv.appendChild(fInput);
+         fForm.appendChild(fLabel);
+         fForm.appendChild(fInput);
          if (i % 2 == 1)
-            createAndAppend("BR", '', '', '', '', fDiv);
+            createAndAppend("BR", '', '', '', '', fForm);
       }
 
-      let fButtonSub = d.createElement("BUTTON");
+      let fButtonSub = d.createElement("input");
       fButtonSub.innerHTML = "Submit";
-      fButtonSub.type = "submit";
-      //fButtonSub.setAttribute("onclick", "superMidiSaveConfig()");
-      createAndAppend("BR", '', '', '', '', fDiv);
-      fDiv.appendChild(fButtonSub);
-      fForm.appendChild(fDiv);
-
-      fForm.addEventListener('submit', handleFormSubmit);
+      fButtonSub.setAttribute('type', 'submit');
+      fButtonSub.onclick = () => this.handleFormSubmit();
+      createAndAppend("BR", '', '', '', '', fForm);
+      fForm.appendChild(fButtonSub);
 
 
+      fDivOuter.appendChild(fDivMiddle);
+      fDivMiddle.appendChild(fDiv);
+      fDiv.appendChild(fForm);
 
-      document.body.appendChild(fForm);
-
+      fForm.addEventListener('submit', dummy);
+      document.body.appendChild(fDivOuter);
    }
+
+
 }

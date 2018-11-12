@@ -37,7 +37,7 @@ export class Configurator {
          return null;
       }
 
-      console.debug(`Configuration found in <b>storage</b> for ${manufacturer} ${portName}`);
+      console.debug(`Configuration found in storage for ${manufacturer} ${portName}`);
       let configJson = JSON.parse(item);
       return new Configuration(configJson);
 

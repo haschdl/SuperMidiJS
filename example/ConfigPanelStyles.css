@@ -1,0 +1,103 @@
+/***
+ * Styles for configuration form.
+ * This CSS file is not exported, but its minified contents are exposed in ConfigPanelStyles.js
+ * 11.11.2018: You must manually minify (VS Code F1 => Minify) and copy paste to ConfigPanelStyles.js
+ *
+ */
+ .formOuter {
+   border-radius: 5px;
+   background-color: #cacacaf8;
+   padding: 10px;
+
+
+   display: table;
+   position: fixed;
+   top: 5vh;
+   width: 50vw;
+   margin-left: 25vw; 
+}
+
+.formMiddle {
+   display: table-cell;
+   vertical-align: middle;
+
+}
+
+.formInner {
+   margin-left: auto;
+   margin-right: auto;
+   
+
+   /*whatever width you want*/
+}
+
+form {
+   overflow:auto;  
+   height: 80vh;
+
+   font-family: 'Helvetica';
+
+}
+
+input[type=radio] {
+   height:20px;
+}
+
+input[type=text],
+select {
+   width: 50%;
+   padding: 12px 20px;
+   margin: 8px 0;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   box-sizing: border-box;
+}
+
+button {
+   padding: 12px 20px;
+   margin: 8px 0;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   box-sizing: border-box;
+
+}
+
+
+
+
+.inputSmall {
+   width: 20% !important;
+   text-align: center;
+}
+
+.inputDuplicate {
+   color: red;
+   font-weight: bold;
+}
+
+label {
+   margin: 20px 0;
+   padding: 10px 5px;
+   text-align: right;
+   display: inline-block
+}
+
+.labelSmall {
+   width: 8%;
+}
+
+input[type=submit] {
+   width: 100%;
+   background-color: #4CAF50;
+   color: white;
+   padding: 14px 20px;
+   margin: 8px 0;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+}
+
+input[type=submit]:hover {
+   background-color: #45a049;
+}
+

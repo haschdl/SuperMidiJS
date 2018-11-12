@@ -24,27 +24,45 @@ export class Pad {
 
 export class PadSet {
 
-   constructor(padMode,padNotes) {
-      this.padCount = padNotes.length;
+   constructor(padMode, padNotes) {
+      this.padCount = Object.keys(padNotes).length;
       this.padMode = padMode;
       this.pads = {};
-      this.padIx = [];
-
-      //initialize the pad array with False => all pads are off
-      this.padStatus = new Array(this.padCount); //Array.apply(null, new Array(padCount)).map(function(){return false});
+      this.padKeys = [];
 
 
+      let indexes = Object.keys(padNotes);
       for (let i = 0; i < this.padCount; i++) {
-         let ix = PadSet.ixFromNotes(Uint8Array.from(padNotes[i]));
-         this.pads[ix] = new Pad("PAD_" + i, i);
+         let objectKey = indexes[i];
+         let ix = PadSet.ixFromNotes(Uint8Array.from(padNotes[objectKey]));
+         this.pads[i] = new Pad(objectKey.toUpperCase(), i);
+
+         if (!this.padKeys[ix])
+            this.padKeys[ix] = [];
+
+         this.padKeys[ix].push(i);
       }
-      this.padIx = Object.keys(this.pads);
+
+      this.padKeys = Object.keys(this.pads);
+   }
+
+   updateByMessage(data) {
+      let keys = this.padKeys[PadSet.ixFromNotes(data)];
+
+
+
+      keys.forEach(key => {
+         let val = this.pads[keys[key]].status;
+
+         this.pads[keys[key]].status = !val;
+
+      });
    }
 
    static ixFromNotes(data) { //MidiMessage is Uint8Array[3]
       //return one integer, same as data[2]*2^16 + data[1]*2^8+data[0]*2^0
-      return (data[2] << 16) +  (data[1] << 8)  + data[0]; 
-   } 
+      return (data[2] << 16) + (data[1] << 8) + data[0];
+   }
 
    get length() {
       return this.padCount;

@@ -58,13 +58,14 @@ export class SuperMidi {
       let data = midiMessage.data; // Uint8Array(3)
       this.onMidiMessageHandler(midiMessage); //broadcasting message
 
-      //console.log(data);
+      this.padSet.updateByMessage(data);
+
       let ix = PadSet.ixFromNotes(data);
       let pad = this.padSet.pads[ix];
       if (pad) {
          console.log("Pressed " + this.padSet.pads[ix].name);
-         let val = this.padSet.pads[ix].status;
-         this.padSet.pads[ix].status = !val;
+      
+        
       }
    }
 
@@ -79,27 +80,27 @@ export class SuperMidi {
     * @param {The id of the device for which the configurations must be loaded.} deviceId 
     */
    loadConfiguration(deviceId) {
-      console.group(`🖍️  [SuperMidi Configurator]`);
+      //console.group(`🖍️  [SuperMidi Configurator]`);
       console.debug(`Loading configuration for device '${deviceId}'.`);
       for (let input of this.MidiInputs.values()) {
          if (input.id == deviceId) {
             let configurator = new Configurator();
             return configurator.getConfigurationOnline(input.manufacturer, input.name)
                .then(c => this.Config = new Configuration(c))
-               .then(() => this.padSet = new PadSet(PAD_MODE.RADIO, this.Config.pads))
                .catch(e => this.configFromStorage(input.manufacturer, input.name))
+               .then(() => this.padSet = new PadSet(PAD_MODE.RADIO, this.Config.pads))
                .catch(e => this.configManually());
             break;
          }
       }
-      console.endgroup();
+      console.groupEnd();
    }
 
    configFromStorage(manufacturer, name) {
       console.log("Loading from local storage...");
       return new Promise((resolve, reject) => {
-         let config = Configurator.getFromStorage(manufacturer, name);
-         if (config) {
+         this.Config = Configurator.getFromStorage(manufacturer, name);
+         if (this.Config) {
             console.warn(`Loading from local storage... %cfound!`, 'color: #008f68;');
             resolve();
          } else {
@@ -109,14 +110,20 @@ export class SuperMidi {
       });
    }
 
+
+
    configManually() {
       if (this.configPanel)
          this.configPanel.closeForm();
       else
          this.configPanel = new ConfigPanel(this);
 
-      this.configPanel.buildForm();
-   }
+
+      this.configPanel.updateConfiguration(this.Config)
+         .then(c => this.Config = this.ConfigPanel.config);
+
+   };
+
 
    /**
     * Call back for when MIDI controller is successfully connected.

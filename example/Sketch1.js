@@ -4,13 +4,17 @@
 
 var controller;
 var s = 35;
-let select = null;
+let select = null, padModeSelec = null;
 
 function setup() {
-   createSpan("Available MIDI Inputs: ");
+   createSpan("MIDI Inputs: ").parent("content");
    select = createSelect();
    select.option("Please connect a MIDI device");
    select.changed = midiDeviceSelected;
+   select.parent("content");
+
+   let bt = createButton("Change").parent("content");
+   
 
    var myCanvas = createCanvas(16 * s, 250);
    myCanvas.parent('sketch');
@@ -20,13 +24,14 @@ function setup() {
    controller = window.controller;
    controller.init();
    controller.onMidiChanged(this.midiChanged);
+   bt.elt.onclick= () => controller.configManually();
 
-
-   createP("Operation of pads: ");
-   radio = createRadio();
-   radio.option('Toggle', 1);
-   radio.option('Radio', 2);
-   radio._getInputChildrenArray()[0].checked = true;
+   createP().parent("content");
+   createSpan("Operation of pads: ").parent("content");
+   padModeSelec = createSelect().parent("content");
+   padModeSelec.option('Toggle', 1);
+   padModeSelec.option('Radio', 2);
+   
 
    frameRateEl = createP("Frame rate: ");
 
@@ -59,27 +64,33 @@ function draw() {
 
 
    //adjusting PadSet mode
-   var padOption = radio.value();
+   var padOption = padModeSelec.selected();
    controller.padSet.padMode = padOption;
 
 
    background(80);
-   translate(s / 2, 0);
+   translate(s/2, 0);
    ellipseMode(CORNER);
 
    let c = controller.padSet.padCount;
    for (let i = 0; i < c; i++) {
-      let key = controller.padSet.padIx[i]; //fetched the key at second index
+      let y = 50 + s* 2 * int(i / 8);
+      let x = s * 2 * (i%8);
+      //console.log(y);
+      let key = controller.padSet.padKeys[i]; //fetched the key at second index
 
-      if (controller.padSet.pads[key].status == true) {
+      if (controller.padSet.pads[key] && controller.padSet.pads[key].status == true) {
          strokeWeight(2);
          stroke(0);
          fill(255, 0, 0);
-         rect(s * 2 * i, 50, s, s);
+         rect(x, y, s, s);
       } else {
-         noFill();
-         rect(s * 2 * i, 50, s, s);
+         fill(255);
+         rect(x, y, s, s);
+     
       }
+      fill(255);
+      text(controller.padSet.pads[key].name, x,y-5);
    }
 
 
