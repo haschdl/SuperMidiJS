@@ -1,0 +1,34 @@
+{
+   "name": "SuperMidiJS",
+   "version": "1.0.0",
+   "description": "A generic wrapper for using MIDI in the browser. It's primarily target at exposing MIDI messages as pads and sliders to javascript code.\r ** Currently looking for contributors. Create an issue if you're interested in colloborating. **",
+   "module": "SuperMidi.js",
+   "private": true,
+   "directories": {
+      "doc": "docs",
+      "example": "example",
+      "test": "test"
+   },
+   "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/haschdl/SuperMidiJS.git"
+   },
+   "keywords": [],
+   "author": "",
+   "license": "ISC",
+   "bugs": {
+      "url": "https://github.com/haschdl/SuperMidiJS/issues"
+   },
+   "homepage": "https://github.com/haschdl/SuperMidiJS#readme",
+   "devDependencies": {
+      "rollup": "^0.67.1",
+      "rollup-plugin-terser": "^3.0.0"
+   },
+   "scripts": {
+      "build": "rollup -c"
+   }
+
+}

@@ -4,9 +4,11 @@
 
 var controller;
 var s = 35;
-let select = null, padModeSelec = null;
+let select = null,
+   padModeSelec = null;
 
 function setup() {
+   controller = window.controller;
    createSpan("MIDI Inputs: ").parent("content");
    select = createSelect();
    select.option("Please connect a MIDI device");
@@ -14,9 +16,9 @@ function setup() {
    select.parent("content");
 
    let bt = createButton("Change").parent("content");
-   
 
-   var myCanvas = createCanvas(16 * s, 250);
+
+   var myCanvas = createCanvas(32 * s, 500);
    myCanvas.parent('sketch');
 
 
@@ -24,14 +26,14 @@ function setup() {
    controller = window.controller;
    controller.init();
    controller.onMidiChanged(this.midiChanged);
-   bt.elt.onclick= () => controller.configManually();
+   bt.elt.onclick = () => controller.configManually();
 
    createP().parent("content");
    createSpan("Operation of pads: ").parent("content");
    padModeSelec = createSelect().parent("content");
    padModeSelec.option('Toggle', 1);
    padModeSelec.option('Radio', 2);
-   
+
 
    frameRateEl = createP("Frame rate: ");
 
@@ -64,22 +66,26 @@ function draw() {
 
 
    //adjusting PadSet mode
-   var padOption = padModeSelec.selected();
-   controller.padSet.padMode = padOption;
+   let c = 0;
+   if (controller.initialized) {
+      var padOption = padModeSelec.selected();
+      controller.padSet.padMode = padOption;
+      c = controller.padSet.padCount;
+   }
 
 
    background(80);
-   translate(s/2, 0);
+   translate(s / 2, 0);
    ellipseMode(CORNER);
 
-   let c = controller.padSet.padCount;
+  
    for (let i = 0; i < c; i++) {
-      let y = 50 + s* 2 * int(i / 8);
-      let x = s * 2 * (i%8);
+      let y = 50 + s * 2 * int(i / 8);
+      let x = s * 2 * (i % 8);
       //console.log(y);
-      let key = controller.padSet.padKeys[i]; //fetched the key at second index
+      let pad = controller.padSet.pads[i]; //fetched the key at second index
 
-      if (controller.padSet.pads[key] && controller.padSet.pads[key].status == true) {
+      if (pad.status == true) {
          strokeWeight(2);
          stroke(0);
          fill(255, 0, 0);
@@ -87,44 +93,9 @@ function draw() {
       } else {
          fill(255);
          rect(x, y, s, s);
-     
+
       }
       fill(255);
-      text(controller.padSet.pads[key].name, x,y-5);
+      text(pad.name, x, y - 5);
    }
-
-
-   //    //drawing 8 knobs, upper row
-
-   //   //drawing positions for arcs
-   //   var start = HALF_PI * 1.3;
-   //   var end = TWO_PI + HALF_PI * .7;
-
-   //    for (var i = 0; i < 16; i++) {
-   //       var x = s * 2 * (i % 8);
-   //       var y = 2*s * (.5 + int(i/8));
-   //       fill(0);
-   //       ellipse(x, y , s, s);
-
-   //       fill(120);
-   //       var normal =controller.knobSet[i].knobValue / 127;
-   //       arc(x, y, s, s, start, start + normal*(end-start),PIE);
-   //       fill(255);
-   //       text(controller.knobSet[i].knobValue,x,y);
-   //    }  
-   //    // drawing 8as * (1 +s   
-   //    translate(0,4*s);
-   //    for (var i = 0; i < 8; i++) {
-   //       if (controller.padSet[i].status == true) {
-   //          strokeWeight(2);
-   //          stroke(0);
-   //          fill(255, 0, 0);
-   //          rect(s * 2 * i, 50, s, s);
-
-   //       } else {
-   //          noFill();
-   //          rect(s * 2 * i, 50, s, s);
-   //       }
-   //    }
-
 }

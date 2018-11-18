@@ -33,9 +33,10 @@ export function setValue(name, value) {
  */
 export function formToJSON(elements) {
    return [].reduce.call(elements, (data, element) => {
-      if (!element.name)
+      if (!element.name || !element.id.startsWith("json") )
          return data;
-      if (element.name.startsWith("pad")) {
+
+      if (element.id.startsWith("jsonPad")) {
          if (!data["pads"])
             data["pads"] = {};
 
@@ -49,7 +50,7 @@ export function formToJSON(elements) {
    }, {});
 }
 
-export function highlightDuplicates(text)  {
+export function highlightDuplicates(text) {
    //checking for duplicates
    let inputs = document.querySelectorAll('input[type=text]');
    let possibleDups = Array.from(inputs).filter(el => el.value == text);
@@ -59,4 +60,11 @@ export function highlightDuplicates(text)  {
       return true;
    }
    return false;
+}
+
+export function createSelectOption(text, value, appendTo) {
+   let opt = document.createElement("option");
+   opt.value = value;
+   opt.text = text;
+   appendTo.appendChild(opt);
 }

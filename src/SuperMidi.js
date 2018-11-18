@@ -18,25 +18,33 @@ import {
 
 export class SuperMidi {
    constructor() {
+
+
+
       this.MidiOut = null;
       this.MidiInputs = [];
       this.MidiOuputs = [];
       this.knobSet = new KnobSet();
-      this.padSet = new PadSet(8, PAD_MODE.RADIO);
+      this.padSet = null;
       this._MidiChangedTriggers = [];
       this._MidiMessageTriggers = [];
       this.Config = null;
       this.configPanel = null;
+      this.initialized = false;
+
+
    }
 
    onMidiChanged(callback) {
       //TODO clear is hack
-      this._MidiChangedTriggers = [];
-      this._MidiChangedTriggers.push(callback);
+      //this._MidiChangedTriggers = [];
+      if (this._MidiChangedTriggers.includes(callback)) {
+         console.log("Ignoring attempt to subscribe to evnet!");
+      } else
+         this._MidiChangedTriggers.push(callback);
    }
 
    onMidiMessage(callback) {
-
       this._MidiMessageTriggers.push(callback);
    }
 
@@ -64,14 +72,17 @@ export class SuperMidi {
       let pad = this.padSet.pads[ix];
       if (pad) {
          console.log("Pressed " + this.padSet.pads[ix].name);
-      
-        
+
+
       }
    }
 
 
-   onMIDIFailure() {
-      console.log('Could not access your MIDI devices.');
+   onMIDIFailure(error) {
+
+      console.error('Could not access your MIDI devices.');
+      console.error(error);
+
    }
 
 
@@ -96,12 +107,14 @@ export class SuperMidi {
       console.groupEnd();
    }
 
+
    configFromStorage(manufacturer, name) {
-      console.log("Loading from local storage...");
+      
       return new Promise((resolve, reject) => {
          this.Config = Configurator.getFromStorage(manufacturer, name);
          if (this.Config) {
-            console.warn(`Loading from local storage... %cfound!`, 'color: #008f68;');
+            console.log(`Loading from local storage... %cfound!`, 'color: #008f68;');
+            this.initialized = true;
             resolve();
          } else {
             console.warn(`Loading from local storage... %cnot found!`, 'color: RED; font-weight:bold');
@@ -115,12 +128,8 @@ export class SuperMidi {
    configManually() {
       if (this.configPanel)
          this.configPanel.closeForm();
-      else
-         this.configPanel = new ConfigPanel(this);
 
-
-      this.configPanel.updateConfiguration(this.Config)
-         .then(c => this.Config = this.ConfigPanel.config);
+      this.configPanel = new ConfigPanel(this);
 
    };
 
@@ -130,8 +139,6 @@ export class SuperMidi {
     * @param {} midiAccess 
     */
    onMIDISuccess(midiAccess) {
-
-
 
       midiAccess.onstatechange = (e) => {
          //TODO Should code handle also other connection values? (closed)
@@ -159,6 +166,10 @@ export class SuperMidi {
       if (this.MidiOutputs == null)
          console.error("No MIDI output found!");
 
+
+
+
+
       /*
          var resetMsg = getResetMessage();
       this.LaunchControlOut.send(resetMsg);
@@ -171,6 +182,16 @@ export class SuperMidi {
 
 
    init() {
+      if (!navigator.requestMIDIAccess) {
+         let msg = "SuperMidiJS will not work here :( " + 
+            " The MIDI API is not supported in this browser. " +
+            " To use this library, please switch to a support browser, such as Chrome. " +
+            " For a list of supported browsers, check https://caniuse.com/#feat=midi";
+
+         alert(msg);
+         console.error(msg);
+         return;
+      }
       navigator.requestMIDIAccess({
             sysex: true
          })

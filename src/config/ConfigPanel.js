@@ -14,6 +14,7 @@ import {
    createAndAppend,
    createEl,
    setValue,
+   createSelectOption,
    formToJSON,
    highlightDuplicates
 } from './DomUtils.js';
@@ -34,20 +35,17 @@ function loadConfigPanelStyles() {
 
 export class ConfigPanel {
 
-   constructor(parent) {
-      this.parent = parent;
+   constructor(controller) {
+      this.controller = controller;
       this.lastMessageTimeStamp = 0;
-      this.updateConfigurationPromise = null;
-      this.configuration = null;
+      this.padCount = 8;
 
-
-
-      //loadConfigPanelStyles();
+      loadConfigPanelStyles();
 
       /***
        * Subscribing to MIDI messages from the SuperMidi
        */
-      this.parent.onMidiMessage((midiMessage) => {
+      this.controller.onMidiMessage((midiMessage) => {
          if (Date.now() - this.lastMessageTimeStamp < 250)
             return;
          else this.lastMessageTimeStamp = Date.now();
@@ -65,24 +63,25 @@ export class ConfigPanel {
             .filter(el => el.value == val)
             .forEach(el => el.classList.remove('inputDuplicate'));
 
-         let nextField = document.activeElement.nextSibling;
-         if (elId.startsWith('config_') && curr.type == "text") {
+
+         if (curr.type == "text") {
             document.activeElement.value = text;
-            document.activeElement.blur();
+            // document.activeElement.blur();
          }
 
-         if (!highlightDuplicates(text)) {
-            while (nextField) {
-               if (nextField.type && nextField.type == "text") {
-                  nextField.focus();
-                  break;
-               }
-               nextField = nextField.nextSibling;
+         highlightDuplicates(text);
+         let nextField = document.activeElement.nextSibling;
+         while (nextField) {
+            if (nextField.type && nextField.type == "text") {
+               nextField.focus();
+               break;
             }
+            nextField = nextField.nextSibling;
          }
+
       });
 
-      this.parent.onMidiChanged((data) => {
+      this.controller.onMidiChanged((data) => {
          this.lastMessageTimeStamp = 0;
          let metadata = {
             m: "disconnected",
@@ -98,16 +97,12 @@ export class ConfigPanel {
          document.getElementById('name').value = metadata["n"];
 
       });
+
+      if (this.controller.Config)
+         this.padCount = Object.keys(this.controller.Config.pads).length;
+      this.buildForm();
    }
 
-   updateConfiguration(config) {
-      this.updateConfigurationPromise = new Promise((resolve, reject) => {
-         this.buildForm();
-         if (config)
-            this.loadExisting(config);
-      });
-      return this.updateConfigurationPromise;
-   }
 
    jsonToForm(json) {
       Object.keys(json).forEach(key => {
@@ -129,7 +124,8 @@ export class ConfigPanel {
    };
 
    loadExisting(configuration) {
-      this.jsonToForm(configuration);
+      if (configuration)
+         this.jsonToForm(configuration);
    }
 
    closeForm() {
@@ -142,22 +138,42 @@ export class ConfigPanel {
     * @return {void}
     */
    handleFormSubmit(event) {
-      console.log("Handling form submission");
       const form = document.getElementById("formSuperMidiConfig");
 
       //event.preventDefault();
       const data = formToJSON(form.elements);
 
       console.dir(data);
-      this.configuration = new Configuration(data);
+
 
       Configurator.saveToStorage(data);
+      this.controller.loadConfiguration(data.name);
 
       removeElement("formDivOuterSuperMidi");
 
-      Promise.resolve(this.updateConfigurationPromise); //.resolve(this.configuration);
-
    }
+
+   changeselect(e) {
+      let inpEl = document.getElementById('fInputPadCount');
+      let selEl = e.srcElement;
+      let val = selEl.options[selEl.selectedIndex].value;
+
+      if (this.padCount != val) {
+         this.padCount = val;
+         this.closeForm();
+         this.buildForm();
+      }
+
+
+
+      if (val == 'Other') {
+         inpEl.style.visibility = 'visible';
+      } else {
+         inpEl.style.visibility = 'hidden';
+      }
+   }
+
+
    buildForm() {
       let dummy = () => false;
 
@@ -181,7 +197,7 @@ export class ConfigPanel {
       createAndAppend('p', 'deviceInfoInstruction', '', 'Reconnecting a MIDI device will populate manufacturer and port name.', "", fForm);
 
 
-      let fInput2 = createEl('input', 'name', 'name', '', 'text');
+      let fInput2 = createEl('input', 'jsonName', 'name', '', 'text');
       let fLabel2 = createEl('Label', 'lblName', 'lblName', 'Device name');
       fLabel2.setAttribute("for", "name");
 
@@ -190,8 +206,8 @@ export class ConfigPanel {
       fForm.appendChild(fInput2);
       createAndAppend("BR", '', '', '', '', fForm);
 
-      var fInput = createEl('input', "manufacturer", 'manufacturer', '', 'text');
-      var fLabel = createEl('Label', 'lblManufacturer', '', 'Manufacturer');
+      let fInput = createEl('input', "jsonManufacturer", 'manufacturer', '', 'text');
+      let fLabel = createEl('Label', 'lblManufacturer', '', 'Manufacturer');
       fLabel.setAttribute("for", "manufacturer");
 
       fForm.appendChild(fLabel);
@@ -203,11 +219,28 @@ export class ConfigPanel {
       createAndAppend('h1', 'pads', '', 'Pads mapping', "", fForm);
       createAndAppend('p', 'devicePadInstruction', '', 'Leaving focus in one field and sending a MIDI message will associate the MIDI pad/button with SuperMidi button.', "", fForm);
 
-      for (let i = 0; i < 16; i++) {
-         var fInput = createEl('input', "config_pad_" + i, 'pad_' + i, '', "text");
+      let fLabelpadCount = createEl('Label', 'lblPadCount', '', 'Number of pads');
+      fLabelpadCount.setAttribute("for", "selectPadCount");
+
+      let selEl = createEl('select', 'selectPadCount', 'selectPadCount', '', '');
+      selEl.onchange = (e) => this.changeselect(e);
+      Array(8).fill().map((_, i) => createSelectOption(pow(2, i), pow(2, i), selEl));
+      createSelectOption("Other", "Other", selEl);
+
+      [].forEach.call(document.querySelectorAll('#selectPadCount :checked'), elm => this.padCount = elm.value);
+
+      let fInputPadCount = createEl('input', "fInputPadCount", 'fInputPadCount', '', 'text');
+      fInputPadCount.style.visibility = 'hidden';
+      fForm.appendChild(fLabelpadCount);
+      fForm.appendChild(selEl);
+      fForm.appendChild(fInputPadCount);
+      createAndAppend("BR", '', '', '', '', fForm);
+
+      for (let i = 0; i < this.padCount; i++) {
+         let fInput = createEl('input', "jsonPad_" + i, 'pad_' + i, '', "text");
          fInput.className = "inputSmall";
          let fLabel = createEl('Label', '', 'PAD ' + i, 'PAD ' + i, '');
-         fLabel.setAttribute("for", "config_pad_" + i);
+         fLabel.setAttribute("for", "jsonPad_" + i);
          fLabel.className = "labelSmall";
          fForm.appendChild(fLabel);
          fForm.appendChild(fInput);
@@ -229,6 +262,8 @@ export class ConfigPanel {
 
       fForm.addEventListener('submit', dummy);
       document.body.appendChild(fDivOuter);
+
+      this.loadExisting(this.controller.Config);
    }
 
 

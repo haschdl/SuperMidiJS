@@ -33,8 +33,9 @@ export class PadSet {
 
       let indexes = Object.keys(padNotes);
       for (let i = 0; i < this.padCount; i++) {
-         let objectKey = indexes[i];
-         let ix = PadSet.ixFromNotes(Uint8Array.from(padNotes[objectKey]));
+         let objectKey = indexes[i]; // pad_1,pad_2...
+         let noteArray = Uint8Array.from(padNotes[objectKey]);
+         let ix = PadSet.ixFromNotes(noteArray);
          this.pads[i] = new Pad(objectKey.toUpperCase(), i);
 
          if (!this.padKeys[ix])
@@ -43,18 +44,23 @@ export class PadSet {
          this.padKeys[ix].push(i);
       }
 
-      this.padKeys = Object.keys(this.pads);
+      //this.padKeys = Object.keys(this.pads);
    }
 
    updateByMessage(data) {
-      let keys = this.padKeys[PadSet.ixFromNotes(data)];
+      let ix = PadSet.ixFromNotes(data);
+      let keys = this.padKeys[ix];
 
+      if (!keys) {
+         console.log("Received a note which is not mapped to any SuperMidiJS key! " + data);
+         return;
+         
+      }
 
+      keys.forEach(i => {
+         let val = this.pads[i].status;
 
-      keys.forEach(key => {
-         let val = this.pads[keys[key]].status;
-
-         this.pads[keys[key]].status = !val;
+         this.pads[i].status = !val;
 
       });
    }

@@ -53,6 +53,9 @@ select {
 .inputSmall {
    width: 20% !important;
    text-align: center;
+   padding: 5px;
+   font-family: monospace;    
+   min-width: 130px;
 }
 
 label {
