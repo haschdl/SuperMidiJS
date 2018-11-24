@@ -1,9 +1,8 @@
 {
-   "name": "SuperMidiJS",
-   "version": "1.0.1",
+   "name": "supermidijs",
+   "version": "0.0.1",
    "description": "A generic wrapper for using MIDI in the browser. It's primarily target at exposing MIDI messages as pads and sliders to javascript code.\r ** Currently looking for contributors. Create an issue if you're interested in colloborating. **",
    "module": "SuperMidi.js",
-   "private": true,
    "directories": {
       "doc": "docs",
       "example": "example",
