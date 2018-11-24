@@ -88,7 +88,7 @@ function draw() {
       //console.log(y);
       let pad = controller.padSet.pads[i]; //fetched the key at second index
 
-      if (pad.status == true) {
+      if (pad.state == true) {
          strokeWeight(2);
          stroke(0);
          fill(255, 0, 0);

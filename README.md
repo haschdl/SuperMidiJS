@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/haschdl/SuperMidiJS.svg?branch=master)](https://travis-ci.org/haschdl/SuperMidiJS)
+[![Build Status](https://travis-ci.org/haschdl/SuperMidiJS.svg?branch=master)](https://travis-ci.org/haschdl/SuperMidiJS) 
+[![npm version](https://badge.fury.io/js/supermidijs.svg)](https://badge.fury.io/js/supermidijs) 
+[![Coverage Status](https://coveralls.io/repos/github/haschdl/SuperMidiJS/badge.svg?branch=master)](https://coveralls.io/github/haschdl/SuperMidiJS?branch=master)
 
 # SuperMidiJS
 
@@ -22,7 +24,7 @@ capturing input from users. It exposes pads and sliders objects, which you can a
 code as boolean or float values.
 
 ``` Javascript
-if (controller.padSet.pads[1].status == true) {
+if (controller.padSet.pads[1].state == true) {
    strokeWeight(2);
    stroke(0);
    fill(255, 0, 0);

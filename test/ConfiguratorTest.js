@@ -7,15 +7,14 @@ window.localStorage = global.localStorage;
 let Configurator = require(path.join(__dirname, '../src/', 'Configurator')).Configurator;
 
 
+
 // Create a group of tests about Configuration
 describe('Configuration', function () {
-
-
-
+   //test setup
+   let configurator;
    // Within our Configuration group, create a group of tests for storage
-   describe('Basic setup', function () {
-      //test setup
-      let configurator;
+   describe('Basic setup', () => {
+      
 
       beforeEach(() => {
          // Create a new Rectangle object before every test.
@@ -38,6 +37,10 @@ describe('Configuration', function () {
 
          assert.equal(name, "/config/A B.json");
       });
+   });
+
+   // Within our Configuration group, create a group of tests for storage
+   describe('Storage',() => {
       it('should not return configuration for a random file name (local storage)', () => {
          let config = Configurator.getFromStorage('123456', 'ABCDEF');
          assert.equal(config, null);

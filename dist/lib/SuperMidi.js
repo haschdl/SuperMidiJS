@@ -2,10 +2,15 @@
  * Represents a pad or button in a MIDI controller. 
  */
 class Pad {
-   constructor(name, code, mode) {
+   /**
+    * Instantiates a new pad object, representing a physical pad and its state.
+    * @param {string} name A simple name for a pad, such as PAD_1 
+    * @param {string} code  
+    */
+   constructor(name, code) {
       this.name = name;
       this.code = code;
-      this.status = false;
+      this.state = false;
    }
 }
 
@@ -27,6 +32,9 @@ var PAD_MODE = Object.freeze({
 class PadSet {
 
    constructor(padMode, padNotes) {
+      if(!padNotes || typeof padNotes != 'object' )
+         throw "padNotes must be an object";
+
       this.padCount = Object.keys(padNotes).length;
       this.padMode = padMode;
       this.pads = [];
@@ -74,18 +82,18 @@ class PadSet {
 
    updatePadsRadio(keys) {
       //disable all others
-      this.pads.forEach(p => p.status = false);
+      this.pads.forEach(p => p.state = false);
 
       keys.forEach(i => {
-         let val = this.pads[i].status;
-         this.pads[i].status = !val;
+         let val = this.pads[i].state;
+         this.pads[i].state = !val;
       });
    }
 
    updatePadsToggle(keys) {
       keys.forEach(i => {
-         let val = this.pads[i].status;
-         this.pads[i].status = !val;
+         let val = this.pads[i].state;
+         this.pads[i].state = !val;
       });
    }
 
@@ -94,16 +102,13 @@ class PadSet {
       return (data[2] << 16) + (data[1] << 8) + data[0];
    }
 
-   get length() {
-      return this.padCount;
-   }
    getPad(padIndex) {
       return this.pads[padIndex];
    }
 
    get firstSelected() {
       for (let i = 0; i < this.padCount; i++) {
-         if (this[i].status == true)
+         if (this[i].state == true)
             return this.pads[i].code;
       }
    }
@@ -185,22 +190,22 @@ class Configurator {
    static saveToStorage(configJson) {
       let manufacturer = configJson['manufacturer'];
       let name = configJson['name'];
+
+      if (!manufacturer || !name)
+         throw "Object must contain attributes 'manufacturer' and 'name'.";
+
       let fileName = this.getFileName(manufacturer, name);
       localStorage.setItem(fileName, JSON.stringify(configJson));
    }
 
    static getFromStorage(manufacturer, portName) {
-      let stor = window.localStorage;
       let fileName = this.getFileName(manufacturer, portName);
       let item = localStorage.getItem(fileName);
-      if (item == null) {         
+      if (item == null) {
          return null;
       }
-
-      console.debug(`Configuration found in storage for ${manufacturer} ${portName}`);
       let configJson = JSON.parse(item);
       return new Configuration(configJson);
-
    }
 
    getConfigurationOnlineResponse(resp, manufacturer, portName) {
@@ -211,9 +216,7 @@ class Configurator {
          return Promise.reject(msg);
       }
 
-      console.log(`Configuration for ${portName} found online!`);
-
-      //TODO Validate if json is valid
+      console.debug(`Configuration for ${portName} found online!`);
       return resp.json();
 
    }

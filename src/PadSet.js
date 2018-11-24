@@ -5,9 +5,21 @@ import {
    PAD_MODE
 } from './PAD_MODE.js';
 
+/**
+ * A group of several Pad objects, which can be updated using a 
+ * @see PAD_MODE
+ */
 export class PadSet {
 
+   /**
+    * Instantiates a new @see PadSet
+    * @param {PAD_MODE} padMode How pads should be updated (e.g. toggle or radio).
+    * @param {Object} padNotes A simple object containing names and 3 notes to list to. 
+    */
    constructor(padMode, padNotes) {
+      if(!padNotes || typeof padNotes != 'object' )
+         throw "padNotes must be an object";
+
       this.padCount = Object.keys(padNotes).length;
       this.padMode = padMode;
       this.pads = [];
@@ -55,18 +67,18 @@ export class PadSet {
 
    updatePadsRadio(keys) {
       //disable all others
-      this.pads.forEach(p => p.status = false);
+      this.pads.forEach(p => p.state = false);
 
       keys.forEach(i => {
-         let val = this.pads[i].status;
-         this.pads[i].status = !val;
+         let val = this.pads[i].state;
+         this.pads[i].state = !val;
       });
    }
 
    updatePadsToggle(keys) {
       keys.forEach(i => {
-         let val = this.pads[i].status;
-         this.pads[i].status = !val;
+         let val = this.pads[i].state;
+         this.pads[i].state = !val;
       });
    }
 
@@ -75,16 +87,13 @@ export class PadSet {
       return (data[2] << 16) + (data[1] << 8) + data[0];
    }
 
-   get length() {
-      return this.padCount;
-   }
    getPad(padIndex) {
       return this.pads[padIndex];
    }
 
    get firstSelected() {
       for (let i = 0; i < this.padCount; i++) {
-         if (this[i].status == true)
+         if (this[i].state == true)
             return this.pads[i].code;
       }
    }

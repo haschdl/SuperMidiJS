@@ -39,8 +39,6 @@ export class Configurator {
       if (item == null) {
          return null;
       }
-
-      console.debug(`Configuration found in storage for ${manufacturer} ${portName}`);
       let configJson = JSON.parse(item);
       return new Configuration(configJson);
    }
@@ -53,9 +51,7 @@ export class Configurator {
          return Promise.reject(msg);
       }
 
-      console.log(`Configuration for ${portName} found online!`);
-
-      //TODO Validate if json is valid
+      console.debug(`Configuration for ${portName} found online!`);
       return resp.json();
 
    }

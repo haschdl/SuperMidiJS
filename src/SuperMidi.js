@@ -20,11 +20,11 @@ import {
    ConfigPanel
 } from "./config/ConfigPanel.js";
 
+/**
+ * A wrapper for MIDI controllers.
+ */
 export class SuperMidi {
    constructor() {
-
-
-
       this.MidiOut = null;
       this.MidiInputs = [];
       this.MidiOuputs = [];
