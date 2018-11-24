@@ -10,7 +10,8 @@
       "test": "test"
    },
    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
+      "build": "rollup -c",
+      "test": "mocha"
    },
    "repository": {
       "type": "git",
@@ -24,11 +25,9 @@
    },
    "homepage": "https://github.com/haschdl/SuperMidiJS#readme",
    "devDependencies": {
+      "mocha": "^5.2.0",
+      "nyc": "^13.1.0",
       "rollup": "^0.67.1",
       "rollup-plugin-terser": "^3.0.0"
-   },
-   "scripts": {
-      "build": "rollup -c"
    }
-
 }
