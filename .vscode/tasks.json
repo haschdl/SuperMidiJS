@@ -14,6 +14,24 @@
          "type": "shell",
          "group": "build",
          "problemMatcher": []
-      }
+      },
+      {
+         "label": "Run tests",         
+         "command": "${workspaceRoot}/node_modules/.bin/nyc",
+         "args": [
+            ""
+         ],
+         "type": "shell",
+         "group": "build",
+         "problemMatcher": []
+      },
+      {
+         "label": "watch",
+         "command": "${workspaceFolder}/node_modules/.bin/babel",
+         "args": ["src", "--out-dir", "lib-es5", "-w", "--source-maps"],
+         "type": "shell",
+         "group": { "kind": "build", "isDefault": true },
+         "isBackground": true
+     }
    ]
 }

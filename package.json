@@ -11,8 +11,11 @@
    },
    "scripts": {
       "build": "rollup -c",
-      "test": "mocha"
+      "test": "nyc mocha --require @babel/register"
    },
+   "presets": [
+      "@babel/preset-env"
+   ],
    "repository": {
       "type": "git",
       "url": "git+https://github.com/haschdl/SuperMidiJS.git"
@@ -25,9 +28,17 @@
    },
    "homepage": "https://github.com/haschdl/SuperMidiJS#readme",
    "devDependencies": {
+      "@babel/cli": "^7.0.0",
+      "@babel/core": "^7.1.6",
+      "@babel/polyfill": "^7.0.0",
+      "@babel/preset-env": "^7.1.6",
+      "@babel/register": "^7.0.0",
+      "babel-preset-es2015": "^6.24.1",
       "mocha": "^5.2.0",
+      "mock-local-storage": "^1.1.7",
       "nyc": "^13.1.0",
       "rollup": "^0.67.1",
       "rollup-plugin-terser": "^3.0.0"
-   }
+   },
+   "dependencies": {}
 }

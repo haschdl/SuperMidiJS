@@ -25,22 +25,24 @@ export class Configurator {
    static saveToStorage(configJson) {
       let manufacturer = configJson['manufacturer'];
       let name = configJson['name'];
+
+      if (!manufacturer || !name)
+         throw "Object must contain attributes 'manufacturer' and 'name'.";
+
       let fileName = this.getFileName(manufacturer, name);
       localStorage.setItem(fileName, JSON.stringify(configJson));
    }
 
    static getFromStorage(manufacturer, portName) {
-      let stor = window.localStorage;
       let fileName = this.getFileName(manufacturer, portName);
       let item = localStorage.getItem(fileName);
-      if (item == null) {         
+      if (item == null) {
          return null;
       }
 
       console.debug(`Configuration found in storage for ${manufacturer} ${portName}`);
       let configJson = JSON.parse(item);
       return new Configuration(configJson);
-
    }
 
    getConfigurationOnlineResponse(resp, manufacturer, portName) {
