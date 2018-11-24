@@ -1,6 +1,6 @@
 {
    "name": "supermidijs",
-   "version": "0.0.2",
+   "version": "0.0.3",
    "description": "A generic wrapper for using MIDI in the browser. It's primarily target at exposing MIDI messages as pads and sliders to javascript code.\r ** Currently looking for contributors. Create an issue if you're interested in colloborating. **",
    "module": "SuperMidi.js",
    "directories": {
@@ -15,12 +15,20 @@
    "presets": [
       "@babel/preset-env"
    ],
-   "files": ["/dist", "/src"],
+   "files": [
+      "/dist",
+      "/src"
+   ],
    "repository": {
       "type": "git",
       "url": "git+https://github.com/haschdl/SuperMidiJS.git"
    },
-   "keywords": ["MIDI", "MIDI API", "MIDI Controllers", "javascript"],
+   "keywords": [
+      "MIDI",
+      "MIDI API",
+      "MIDI Controllers",
+      "javascript"
+   ],
    "author": "H. Scheidl <i@hscheidl.com> (https://hscheidl.com)",
    "license": "ISC",
    "bugs": {
