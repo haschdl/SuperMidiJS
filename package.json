@@ -5,7 +5,7 @@
    "module": "SuperMidi.js",
    "directories": {
       "doc": "docs",
-      "example": "example",
+      "example": "dist/example",
       "test": "test"
    },
    "scripts": {
@@ -15,12 +15,13 @@
    "presets": [
       "@babel/preset-env"
    ],
+   "files": ["/dist", "/src"],
    "repository": {
       "type": "git",
       "url": "git+https://github.com/haschdl/SuperMidiJS.git"
    },
-   "keywords": [],
-   "author": "",
+   "keywords": ["MIDI", "MIDI API", "MIDI Controllers", "javascript"],
+   "author": "H. Scheidl <i@hscheidl.com> (https://hscheidl.com)",
    "license": "ISC",
    "bugs": {
       "url": "https://github.com/haschdl/SuperMidiJS/issues"
