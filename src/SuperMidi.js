@@ -1,7 +1,11 @@
 import {
-   PadSet,
-   PAD_MODE
+   PadSet
 } from './PadSet.js';
+
+import {
+   PAD_MODE
+} from './PAD_MODE';
+
 import {
    KnobSet
 } from './KnobSet.js';
@@ -50,8 +54,7 @@ export class SuperMidi {
 
    onMidiChangedHandler(params) {
       if (this._MidiChangedTriggers) {
-         for (let i in this._MidiChangedTriggers)
-            this._MidiChangedTriggers[i](params);
+         this._MidiChangedTriggers.forEach(callback => callback(params));
       }
    }
 
@@ -100,7 +103,7 @@ export class SuperMidi {
                .then(c => this.Config = new Configuration(c))
                .catch(e => this.configFromStorage(input.manufacturer, input.name))
                .then(() => this.padSet = new PadSet(PAD_MODE.RADIO, this.Config.pads))
-               .catch(e => this.configManually());
+               .catch(e => this.configManually(input));
             break;
          }
       }
@@ -109,7 +112,7 @@ export class SuperMidi {
 
 
    configFromStorage(manufacturer, name) {
-      
+
       return new Promise((resolve, reject) => {
          this.Config = Configurator.getFromStorage(manufacturer, name);
          if (this.Config) {
@@ -117,19 +120,19 @@ export class SuperMidi {
             this.initialized = true;
             resolve();
          } else {
-            console.warn(`Loading from local storage... %cnot found!`, 'color: RED; font-weight:bold');
-            reject();
+            throw "Loading from local storage: not found!"; //rejects
+            
          }
       });
    }
 
 
 
-   configManually() {
+   configManually(input) {
       if (this.configPanel)
          this.configPanel.closeForm();
 
-      this.configPanel = new ConfigPanel(this);
+      this.configPanel = new ConfigPanel(this, input);
 
    };
 
@@ -183,7 +186,7 @@ export class SuperMidi {
 
    init() {
       if (!navigator.requestMIDIAccess) {
-         let msg = "SuperMidiJS will not work here :( " + 
+         let msg = "SuperMidiJS will not work here :( " +
             " The MIDI API is not supported in this browser. " +
             " To use this library, please switch to a support browser, such as Chrome. " +
             " For a list of supported browsers, check https://caniuse.com/#feat=midi";

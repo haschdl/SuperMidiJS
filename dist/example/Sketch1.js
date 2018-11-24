@@ -25,7 +25,7 @@ function setup() {
    //controller = new LaunchController();
    controller = window.controller;
    controller.init();
-   controller.onMidiChanged(this.midiChanged);
+   controller.onMidiChanged((e) => this.midiChanged(e));
    bt.elt.onclick = () => controller.configManually();
 
    createP().parent("content");
@@ -39,7 +39,10 @@ function setup() {
 
 }
 
-function midiChanged() {
+function midiChanged(e) {
+   if (e.port.connection != 'open')
+      return;
+
    select.elt.options.length = 0;
    for (let inp of controller.MidiInputs.values())
       select.option(inp.manufacturer + " " + inp.name, inp.id);
@@ -78,7 +81,7 @@ function draw() {
    translate(s / 2, 0);
    ellipseMode(CORNER);
 
-  
+
    for (let i = 0; i < c; i++) {
       let y = 50 + s * 2 * int(i / 8);
       let x = s * 2 * (i % 8);

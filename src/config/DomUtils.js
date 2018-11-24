@@ -29,19 +29,22 @@ export function setValue(name, value) {
 /**
  * Retrieves input data from a form and returns it as a JSON object.
  * @param  {HTMLFormControlsCollection} elements  the form elements
+ * @param {filter} Function to filter which elements to include in the JSON.
+ *                 You could use for example (e) => e.dataset.export="true"
  * @return {Object}                               form data as an object literal
  */
-export function formToJSON(elements) {
+export function formToJSON(elements, filter) {
    return [].reduce.call(elements, (data, element) => {
-      if (!element.name || !element.id.startsWith("json") )
+      if (!filter(element))
          return data;
 
-      if (element.id.startsWith("jsonPad")) {
-         if (!data["pads"])
-            data["pads"] = {};
+      if (element.dataset.exportArray) {
+         let listName = element.dataset.exportArray;
+         if (!data[listName])
+            data[listName] = {};
 
          let val = element.value || "[]";
-         data["pads"][element.name] = JSON.parse(val);
+         data[listName][element.name] = JSON.parse(val);
       } else
          data[element.name] = element.value;
 

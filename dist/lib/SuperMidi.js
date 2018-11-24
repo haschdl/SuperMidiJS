@@ -1,18 +1,3 @@
-var PAD_MODE = Object.freeze({
-   /**
-    * Pad works like a on/off switch. The state of the pad is persisted, and pad is lit
-    * until a second push. Several pads can be turned on at the same time.
-    * This is the default mode. Note: the state of each pad is available from
-    * {@link LaunchController#getPad(PADS)}.
-    */
-   TOGGLE: 1,
-   /**
-    * Pads work as a group of "radio buttons", meaning that only one pad can be activated at a time.
-    * Pushing one pad will deactivate the other pads.
-    */
-   RADIO: 2
-});
-
 class Pad {
    constructor(name, code, mode) {
       this.name = name;
@@ -84,6 +69,21 @@ class PadSet {
       }
    }
 }
+
+var PAD_MODE = Object.freeze({
+   /**
+    * Pad works like a on/off switch. The state of the pad is persisted, and pad is lit
+    * until a second push. Several pads can be turned on at the same time.
+    * This is the default mode. Note: the state of each pad is available from
+    * {@link LaunchController#getPad(PADS)}.
+    */
+   TOGGLE: 1,
+   /**
+    * Pads work as a group of "radio buttons", meaning that only one pad can be activated at a time.
+    * Pushing one pad will deactivate the other pads.
+    */
+   RADIO: 2
+});
 
 class Knob {
    constructor(knobCode, minValue, maxValue) {
@@ -209,7 +209,7 @@ class Configurator {
 
 }
 
-const ConfigPanelStyles = ".formOuter{border-radius:5px;background-color:#cacacaf8;padding:10px;display:table;position:fixed;top:5vh;width:50vw;margin-left:25vw}.formMiddle{display:table-cell;vertical-align:middle}.formInner{margin-left:auto;margin-right:auto}form{overflow:auto;height:80vh;font-family:Helvetica}input[type=text],select{width:50%;padding:12px 20px;margin:8px 0;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}.inputSmall{width:20%!important;text-align:center;font-family:monospace;min-width:130px}label{width:15%;margin:20px 0;padding:10px 5px;text-align:right;display:inline-block}.labelSmall{width:8%}input[type=submit]{width:100%;background-color:#4CAF50;color:#fff;padding:14px 20px;margin:8px 0;border:none;border-radius:4px;cursor:pointer}input[type=submit]:hover{background-color:#45a049}";
+const ConfigPanelStyles = ".formOuter{border-radius:5px;background-color:#cacacaf8;padding:10px;display:table;position:fixed;top:5vh;width:50vw;margin-left:25vw}.formMiddle{display:table-cell;vertical-align:middle}.formInner{margin-left:auto;margin-right:auto}form{overflow:auto;height:80vh;font-family:Helvetica}input[type=text],select{width:50%;padding:12px 20px;margin:8px 0;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}.inputSmall{width:20%!important;text-align:center;padding:5px;font-family:monospace;min-width:130px}label{width:15%;margin:20px 0;padding:10px 5px;text-align:right;display:inline-block}.labelSmall{width:8%}input[type=submit]{width:100%;background-color:#4CAF50;color:#fff;padding:14px 20px;margin:8px 0;border:none;border-radius:4px;cursor:pointer}input[type=submit]:hover{background-co";
 
 function removeElement(elementId) {
    let elet = document.getElementById(elementId);
@@ -240,19 +240,22 @@ function setValue(name, value) {
 /**
  * Retrieves input data from a form and returns it as a JSON object.
  * @param  {HTMLFormControlsCollection} elements  the form elements
+ * @param {filter} Function to filter which elements to include in the JSON.
+ *                 You could use for example (e) => e.dataset.export="true"
  * @return {Object}                               form data as an object literal
  */
-function formToJSON(elements) {
+function formToJSON(elements, filter) {
    return [].reduce.call(elements, (data, element) => {
-      if (!element.name || !element.id.startsWith("json") )
+      if (!filter(element))
          return data;
 
-      if (element.id.startsWith("jsonPad")) {
-         if (!data["pads"])
-            data["pads"] = {};
+      if (element.dataset.exportArray) {
+         let listName = element.dataset.exportArray;
+         if (!data[listName])
+            data[listName] = {};
 
          let val = element.value || "[]";
-         data["pads"][element.name] = JSON.parse(val);
+         data[listName][element.name] = JSON.parse(val);
       } else
          data[element.name] = element.value;
 
@@ -294,10 +297,11 @@ function loadConfigPanelStyles() {
 
 class ConfigPanel {
 
-   constructor(controller) {
+   constructor(controller, input) {
       this.controller = controller;
       this.lastMessageTimeStamp = 0;
       this.padCount = 8;
+      this.input = input;
 
       loadConfigPanelStyles();
 
@@ -340,26 +344,29 @@ class ConfigPanel {
 
       });
 
-      this.controller.onMidiChanged((data) => {
-         this.lastMessageTimeStamp = 0;
-         let metadata = {
-            m: "disconnected",
-            n: "disconnected"
-         };
-         if (data.port.state != "disconnected") {
-            metadata = {
-               m: data.port.manufacturer,
-               n: data.port.name
-            };
-         }
-         document.getElementById('manufacturer').value = metadata["m"];
-         document.getElementById('name').value = metadata["n"];
-
-      });
+      this.controller.onMidiChanged(this.onMidiChanged);
 
       if (this.controller.Config)
          this.padCount = Object.keys(this.controller.Config.pads).length;
-      this.buildForm();
+      this.buildForm(input);
+   }
+
+   onMidiChanged(data) {
+
+
+      let metadata = {
+         m: "disconnected",
+         n: "disconnected"
+      };
+      if (data.port.state != "disconnected") {
+         metadata = {
+            m: data.port.manufacturer,
+            n: data.port.name
+         };
+      }
+      document.getElementById('jsonManufacturer').value = metadata["m"];
+      document.getElementById('jsonName').value = metadata["n"];
+
    }
 
 
@@ -400,7 +407,7 @@ class ConfigPanel {
       const form = document.getElementById("formSuperMidiConfig");
 
       //event.preventDefault();
-      const data = formToJSON(form.elements);
+      const data = formToJSON(form.elements, (e) => e.dataset.export = "true");
 
       console.dir(data);
 
@@ -433,7 +440,7 @@ class ConfigPanel {
    }
 
 
-   buildForm() {
+   buildForm(input) {
       let dummy = () => false;
 
 
@@ -455,6 +462,11 @@ class ConfigPanel {
 
 
       let fInput2 = createEl('input', 'jsonName', 'name', '', 'text');
+      fInput2.dataset.export = "true";
+
+      if (input)
+         fInput2.value = input.name;
+
       let fLabel2 = createEl('Label', 'lblName', 'lblName', 'Device name');
       fLabel2.setAttribute("for", "name");
 
@@ -464,6 +476,10 @@ class ConfigPanel {
       createAndAppend("BR", '', '', '', '', fForm);
 
       let fInput = createEl('input', "jsonManufacturer", 'manufacturer', '', 'text');
+      fInput.dataset.export = "true";
+      if (input)
+         fInput.value = input.manufacturer;
+
       let fLabel = createEl('Label', 'lblManufacturer', '', 'Manufacturer');
       fLabel.setAttribute("for", "manufacturer");
 
@@ -495,6 +511,8 @@ class ConfigPanel {
 
       for (let i = 0; i < this.padCount; i++) {
          let fInput = createEl('input', "jsonPad_" + i, 'pad_' + i, '', "text");
+         fInput.dataset.export = "true";
+         fInput.dataset.exportArray = "pads";
          fInput.className = "inputSmall";
          let fLabel = createEl('Label', '', 'PAD ' + i, 'PAD ' + i, '');
          fLabel.setAttribute("for", "jsonPad_" + i);
@@ -560,8 +578,7 @@ class SuperMidi {
 
    onMidiChangedHandler(params) {
       if (this._MidiChangedTriggers) {
-         for (let i in this._MidiChangedTriggers)
-            this._MidiChangedTriggers[i](params);
+         this._MidiChangedTriggers.forEach(callback => callback(params));
       }
    }
 
@@ -610,7 +627,7 @@ class SuperMidi {
                .then(c => this.Config = new Configuration(c))
                .catch(e => this.configFromStorage(input.manufacturer, input.name))
                .then(() => this.padSet = new PadSet(PAD_MODE.RADIO, this.Config.pads))
-               .catch(e => this.configManually());
+               .catch(e => this.configManually(input));
             break;
          }
       }
@@ -619,7 +636,7 @@ class SuperMidi {
 
 
    configFromStorage(manufacturer, name) {
-      
+
       return new Promise((resolve, reject) => {
          this.Config = Configurator.getFromStorage(manufacturer, name);
          if (this.Config) {
@@ -627,19 +644,19 @@ class SuperMidi {
             this.initialized = true;
             resolve();
          } else {
-            console.warn(`Loading from local storage... %cnot found!`, 'color: RED; font-weight:bold');
-            reject();
+            throw "Loading from local storage: not found!"; //rejects
+            
          }
       });
    }
 
 
 
-   configManually() {
+   configManually(input) {
       if (this.configPanel)
          this.configPanel.closeForm();
 
-      this.configPanel = new ConfigPanel(this);
+      this.configPanel = new ConfigPanel(this, input);
 
    };
 
@@ -693,7 +710,7 @@ class SuperMidi {
 
    init() {
       if (!navigator.requestMIDIAccess) {
-         let msg = "SuperMidiJS will not work here :( " + 
+         let msg = "SuperMidiJS will not work here :( " +
             " The MIDI API is not supported in this browser. " +
             " To use this library, please switch to a support browser, such as Chrome. " +
             " For a list of supported browsers, check https://caniuse.com/#feat=midi";

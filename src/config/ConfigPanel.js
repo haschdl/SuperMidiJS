@@ -35,10 +35,11 @@ function loadConfigPanelStyles() {
 
 export class ConfigPanel {
 
-   constructor(controller) {
+   constructor(controller, input) {
       this.controller = controller;
       this.lastMessageTimeStamp = 0;
       this.padCount = 8;
+      this.input = input;
 
       loadConfigPanelStyles();
 
@@ -81,26 +82,29 @@ export class ConfigPanel {
 
       });
 
-      this.controller.onMidiChanged((data) => {
-         this.lastMessageTimeStamp = 0;
-         let metadata = {
-            m: "disconnected",
-            n: "disconnected"
-         };
-         if (data.port.state != "disconnected") {
-            metadata = {
-               m: data.port.manufacturer,
-               n: data.port.name
-            };
-         }
-         document.getElementById('manufacturer').value = metadata["m"];
-         document.getElementById('name').value = metadata["n"];
-
-      });
+      this.controller.onMidiChanged(this.onMidiChanged);
 
       if (this.controller.Config)
          this.padCount = Object.keys(this.controller.Config.pads).length;
-      this.buildForm();
+      this.buildForm(input);
+   }
+
+   onMidiChanged(data) {
+
+
+      let metadata = {
+         m: "disconnected",
+         n: "disconnected"
+      };
+      if (data.port.state != "disconnected") {
+         metadata = {
+            m: data.port.manufacturer,
+            n: data.port.name
+         };
+      }
+      document.getElementById('jsonManufacturer').value = metadata["m"];
+      document.getElementById('jsonName').value = metadata["n"];
+
    }
 
 
@@ -141,7 +145,7 @@ export class ConfigPanel {
       const form = document.getElementById("formSuperMidiConfig");
 
       //event.preventDefault();
-      const data = formToJSON(form.elements);
+      const data = formToJSON(form.elements, (e) => e.dataset.export = "true");
 
       console.dir(data);
 
@@ -174,7 +178,7 @@ export class ConfigPanel {
    }
 
 
-   buildForm() {
+   buildForm(input) {
       let dummy = () => false;
 
       let lastMessageTimeStamp = Date.now();
@@ -198,6 +202,11 @@ export class ConfigPanel {
 
 
       let fInput2 = createEl('input', 'jsonName', 'name', '', 'text');
+      fInput2.dataset.export = "true";
+
+      if (input)
+         fInput2.value = input.name;
+
       let fLabel2 = createEl('Label', 'lblName', 'lblName', 'Device name');
       fLabel2.setAttribute("for", "name");
 
@@ -207,6 +216,10 @@ export class ConfigPanel {
       createAndAppend("BR", '', '', '', '', fForm);
 
       let fInput = createEl('input', "jsonManufacturer", 'manufacturer', '', 'text');
+      fInput.dataset.export = "true";
+      if (input)
+         fInput.value = input.manufacturer;
+
       let fLabel = createEl('Label', 'lblManufacturer', '', 'Manufacturer');
       fLabel.setAttribute("for", "manufacturer");
 
@@ -238,6 +251,8 @@ export class ConfigPanel {
 
       for (let i = 0; i < this.padCount; i++) {
          let fInput = createEl('input', "jsonPad_" + i, 'pad_' + i, '', "text");
+         fInput.dataset.export = "true";
+         fInput.dataset.exportArray = "pads";
          fInput.className = "inputSmall";
          let fLabel = createEl('Label', '', 'PAD ' + i, 'PAD ' + i, '');
          fLabel.setAttribute("for", "jsonPad_" + i);
