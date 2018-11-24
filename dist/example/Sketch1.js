@@ -72,7 +72,7 @@ function draw() {
    let c = 0;
    if (controller.initialized) {
       var padOption = padModeSelec.selected();
-      controller.padSet.padMode = padOption;
+      controller.padSet.padMode =  Number.parseInt(padOption);
       c = controller.padSet.padCount;
    }
 

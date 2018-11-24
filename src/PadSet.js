@@ -1,13 +1,16 @@
 import {
    Pad
 } from './Pad.js';
+import {
+   PAD_MODE
+} from './PAD_MODE.js';
 
 export class PadSet {
 
    constructor(padMode, padNotes) {
       this.padCount = Object.keys(padNotes).length;
       this.padMode = padMode;
-      this.pads = {};
+      this.pads = [];
       this.padKeys = [];
 
 
@@ -34,14 +37,36 @@ export class PadSet {
       if (!keys) {
          console.log("Received a note which is not mapped to any SuperMidiJS key! " + data);
          return;
-         
+
       }
+
+      //updating model, according to PAD_MODE
+      switch (this.padMode) {
+         case PAD_MODE.TOGGLE:
+            this.updatePadsToggle(keys);
+            break;
+         case PAD_MODE.RADIO:
+            this.updatePadsRadio(keys);
+            break;
+         default:
+            break;
+      }
+   }
+
+   updatePadsRadio(keys) {
+      //disable all others
+      this.pads.forEach(p => p.status = false);
 
       keys.forEach(i => {
          let val = this.pads[i].status;
-
          this.pads[i].status = !val;
+      });
+   }
 
+   updatePadsToggle(keys) {
+      keys.forEach(i => {
+         let val = this.pads[i].status;
+         this.pads[i].status = !val;
       });
    }
 

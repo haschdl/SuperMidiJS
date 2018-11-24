@@ -4,6 +4,14 @@ export function removeElement(elementId) {
       elet.parentNode.removeChild(elet);
 };
 
+/**
+ * Creates a new element, with optional attributes
+ * @param {*} tag 
+ * @param {*} id 
+ * @param {*} name 
+ * @param {*} innerHtml 
+ * @param {*} type 
+ */
 export function createEl(tag, id, name, innerHtml, type) {
    let el = document.createElement(tag);
    if (innerHtml)

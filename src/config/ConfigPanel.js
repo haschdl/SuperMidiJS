@@ -145,7 +145,7 @@ export class ConfigPanel {
       const form = document.getElementById("formSuperMidiConfig");
 
       //event.preventDefault();
-      const data = formToJSON(form.elements, (e) => e.dataset.export = "true");
+      const data = formToJSON(form.elements, (e) => e.dataset.export == "true");
 
       console.dir(data);
 

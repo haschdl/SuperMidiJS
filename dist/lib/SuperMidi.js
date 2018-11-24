@@ -1,18 +1,35 @@
+/**
+ * Represents a pad or button in a MIDI controller. 
+ */
 class Pad {
    constructor(name, code, mode) {
       this.name = name;
       this.code = code;
       this.status = false;
-
    }
 }
+
+var PAD_MODE = Object.freeze({
+   /**
+    * Pad works like a on/off switch. The state of the pad is persisted, and pad is lit
+    * until a second push. Several pads can be turned on at the same time.
+    * This is the default mode. Note: the state of each pad is available from
+    * {@link LaunchController#getPad(PADS)}.
+    */
+   TOGGLE: 1,
+   /**
+    * Pads work as a group of "radio buttons", meaning that only one pad can be activated at a time.
+    * Pushing one pad will deactivate the other pads.
+    */
+   RADIO: 2
+});
 
 class PadSet {
 
    constructor(padMode, padNotes) {
       this.padCount = Object.keys(padNotes).length;
       this.padMode = padMode;
-      this.pads = {};
+      this.pads = [];
       this.padKeys = [];
 
 
@@ -39,14 +56,36 @@ class PadSet {
       if (!keys) {
          console.log("Received a note which is not mapped to any SuperMidiJS key! " + data);
          return;
-         
+
       }
+
+      //updating model, according to PAD_MODE
+      switch (this.padMode) {
+         case PAD_MODE.TOGGLE:
+            this.updatePadsToggle(keys);
+            break;
+         case PAD_MODE.RADIO:
+            this.updatePadsRadio(keys);
+            break;
+         default:
+            break;
+      }
+   }
+
+   updatePadsRadio(keys) {
+      //disable all others
+      this.pads.forEach(p => p.status = false);
 
       keys.forEach(i => {
          let val = this.pads[i].status;
-
          this.pads[i].status = !val;
+      });
+   }
 
+   updatePadsToggle(keys) {
+      keys.forEach(i => {
+         let val = this.pads[i].status;
+         this.pads[i].status = !val;
       });
    }
 
@@ -69,21 +108,6 @@ class PadSet {
       }
    }
 }
-
-var PAD_MODE = Object.freeze({
-   /**
-    * Pad works like a on/off switch. The state of the pad is persisted, and pad is lit
-    * until a second push. Several pads can be turned on at the same time.
-    * This is the default mode. Note: the state of each pad is available from
-    * {@link LaunchController#getPad(PADS)}.
-    */
-   TOGGLE: 1,
-   /**
-    * Pads work as a group of "radio buttons", meaning that only one pad can be activated at a time.
-    * Pushing one pad will deactivate the other pads.
-    */
-   RADIO: 2
-});
 
 class Knob {
    constructor(knobCode, minValue, maxValue) {
@@ -216,6 +240,14 @@ function removeElement(elementId) {
    if (elet)
       elet.parentNode.removeChild(elet);
 }
+/**
+ * Creates a new element, with optional attributes
+ * @param {*} tag 
+ * @param {*} id 
+ * @param {*} name 
+ * @param {*} innerHtml 
+ * @param {*} type 
+ */
 function createEl(tag, id, name, innerHtml, type) {
    let el = document.createElement(tag);
    if (innerHtml)
@@ -407,7 +439,7 @@ class ConfigPanel {
       const form = document.getElementById("formSuperMidiConfig");
 
       //event.preventDefault();
-      const data = formToJSON(form.elements, (e) => e.dataset.export = "true");
+      const data = formToJSON(form.elements, (e) => e.dataset.export == "true");
 
       console.dir(data);
 
