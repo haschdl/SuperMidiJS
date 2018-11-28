@@ -20,31 +20,31 @@ export class PadSet {
       if(!padNotes || typeof padNotes != 'object' )
          throw "padNotes must be an object";
 
+      //console.log("New pad from notes " + JSON.stringify(padNotes));
       this.padCount = Object.keys(padNotes).length;
       this.padMode = padMode;
       this.pads = [];
-      this.padKeys = [];
+      this.padKeysDict = {};
 
 
       let indexes = Object.keys(padNotes);
+      
       for (let i = 0; i < this.padCount; i++) {
-         let objectKey = indexes[i]; // pad_1,pad_2...
-         let noteArray = Uint8Array.from(padNotes[objectKey]);
+         let objectKey = indexes[i]; // pad_1,pad_2...         
+         let noteArray = padNotes[objectKey];
          let ix = PadSet.ixFromNotes(noteArray);
-         this.pads[i] = new Pad(objectKey.toUpperCase(), i);
+         this.pads.push( new Pad(objectKey.toUpperCase(), i));
 
-         if (!this.padKeys[ix])
-            this.padKeys[ix] = [];
+         if (!this.padKeysDict[ix])
+            this.padKeysDict[ix] = [];
 
-         this.padKeys[ix].push(i);
+         this.padKeysDict[ix].push(i);
       }
-
-      //this.padKeys = Object.keys(this.pads);
    }
 
    updateByMessage(data) {
       let ix = PadSet.ixFromNotes(data);
-      let keys = this.padKeys[ix];
+      let keys = this.padKeysDict[ix];
 
       if (!keys) {
          console.log("Received a note which is not mapped to any SuperMidiJS key! " + data);
@@ -65,25 +65,25 @@ export class PadSet {
       }
    }
 
-   updatePadsRadio(keys) {
+   updatePadsRadio(indexes) {
       //disable all others
       this.pads.forEach(p => p.state = false);
 
-      keys.forEach(i => {
+      indexes.forEach(i => {
          let val = this.pads[i].state;
          this.pads[i].state = !val;
       });
    }
 
-   updatePadsToggle(keys) {
-      keys.forEach(i => {
+   updatePadsToggle(indexes) {
+      indexes.forEach(i => {
          let val = this.pads[i].state;
          this.pads[i].state = !val;
       });
    }
 
    static ixFromNotes(data) { //MidiMessage is Uint8Array[3]
-      //return one integer, same as data[2]*2^16 + data[1]*2^8+data[0]*2^0
+      //return one integer, same as data[2]*(2^16) + data[1]*(2^8)+data[0]*(2^0)
       return (data[2] << 16) + (data[1] << 8) + data[0];
    }
 
@@ -91,10 +91,4 @@ export class PadSet {
       return this.pads[padIndex];
    }
 
-   get firstSelected() {
-      for (let i = 0; i < this.padCount; i++) {
-         if (this[i].state == true)
-            return this.pads[i].code;
-      }
-   }
 }
